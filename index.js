@@ -1,8 +1,7 @@
-// index.js - WIDGET PHANNIE (Botón Flotante)
+// index.js - WIDGET PHANNIE (Botón Flotante, Estilos Corregidos)
 
-// **********************************************
-// ********* LÓGICA DE PROCESAMIENTO **********
-// **********************************************
+// La lógica de procesamiento updateWidgetPanel(response) es robusta y no necesita cambios. 
+// Solo cambiamos la sección onExtensionLoaded para la UI.
 
 function updateWidgetPanel(response) {
     const WIDGET_START_TAG = '<WIDGET_DATA>';
@@ -13,17 +12,16 @@ function updateWidgetPanel(response) {
     let widgetButton = document.getElementById('phannie-widget-button');
 
     if (!widgetPanel || !widgetButton) {
-        return response; // No hay panel/botón, devolvemos el texto original
+        return response;
     }
     
-    // Si el mensaje no contiene el bloque de datos, reiniciamos el panel.
     if (!response.includes(WIDGET_START_TAG)) {
         widgetPanel.innerHTML = '<p style="text-align:center; padding:10px; font-style: italic; opacity:0.8;">Esperando la primera respuesta de la IA...</p>';
         return response; 
     }
 
     try {
-        // --- Extracción de Datos ---
+        // --- LÓGICA DE EXTRACCIÓN Y HTML (SIN CAMBIOS) ---
         const startIndex = response.indexOf(WIDGET_START_TAG) + WIDGET_START_TAG.length;
         const endIndex = response.indexOf(WIDGET_END_TAG);
         const dataBlock = response.substring(startIndex, endIndex).trim();
@@ -48,8 +46,6 @@ function updateWidgetPanel(response) {
         const busquedasStr = extractValue('Búsquedas');
         data.busquedas = busquedasStr ? busquedasStr.split('|').map(b => b.trim()) : [];
 
-        // --- Generación de HTML (Tu Diseño) ---
-        // El código de generación de HTML permanece igual para actualizar el contenido del panel
         let transaccionesHTML = data.transacciones.map(t => {
             const parts = t.split(';');
             const desc = parts[0].trim();
@@ -115,11 +111,9 @@ function updateWidgetPanel(response) {
             </div>
         `;
 
-        // 2. Actualizar el contenido del panel y mostrarlo
         widgetPanel.innerHTML = widgetContent;
-        widgetPanel.style.display = 'block'; // Aseguramos que esté visible
+        widgetPanel.style.display = 'block';
 
-        // 3. Devolver el mensaje del bot *sin* el bloque de datos
         const textWithoutData = response.replace(new RegExp(`${WIDGET_START_TAG}.*?${WIDGET_END_TAG}`, 's'), '').trim();
         return textWithoutData;
 
@@ -139,10 +133,9 @@ const extension = {
     name: "WIDGET PHANNIE", 
 
     onExtensionLoaded: async () => {
-        // Enganche para el procesamiento de mensajes
         extension.on('onMessageGeneration', extension.onMessageGeneration);
         
-        // --- CÓDIGO CLAVE PARA EL BOTÓN Y PANEL FLOTANTE (Enganche directo al DOM) ---
+        // --- INYECCIÓN DE UI DIRECTA AL BODY (Como las FABs del RPG Companion) ---
         
         // 1. Crear el panel (oculto inicialmente)
         const panelHtml = `
@@ -151,14 +144,14 @@ const extension = {
                 top: 50%;
                 right: 20px;
                 transform: translateY(-50%);
-                width: 200px;
+                width: 250px; /* Un poco más ancho para visibilidad */
                 background: var(--bg3);
                 border: 1px solid var(--border-color);
                 border-radius: 16px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                 padding: 10px;
-                z-index: 1000;
-                display: none; /* Inicialmente oculto */
+                z-index: 10000; /* Alto z-index para estar sobre todo */
+                display: none; 
                 max-height: 80vh; 
                 overflow-y: auto;
             ">
@@ -169,7 +162,7 @@ const extension = {
             </div>
         `;
         
-        // 2. Crear el botón flotante
+        // 2. Crear el botón flotante (FAB)
         const buttonHtml = `
             <div id="phannie-widget-button" style="
                 position: fixed;
@@ -186,13 +179,14 @@ const extension = {
                 font-size: 24px;
                 cursor: pointer;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-                z-index: 1001;
+                z-index: 10001; /* Más alto que el panel */
             ">
                 📱
             </div>
         `;
         
         // 3. Añadir ambos elementos al cuerpo del documento (DOM)
+        // Aseguramos que se inyecte directamente al final del cuerpo
         document.body.insertAdjacentHTML('beforeend', panelHtml);
         document.body.insertAdjacentHTML('beforeend', buttonHtml);
 
@@ -200,6 +194,19 @@ const extension = {
         document.getElementById('phannie-widget-button').addEventListener('click', () => {
             const panel = document.getElementById('phannie-widget-ui-panel');
             if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        });
+    },
+    
+    onMessageGeneration: async (data, chat) => {
+        return updateWidgetPanel(data);
+    }
+};
+
+export { extension };panel.style.display === '') {
                 panel.style.display = 'block';
             } else {
                 panel.style.display = 'none';
