@@ -1,33 +1,28 @@
-// index.js - WIDGET PHANNIE PRO (UI Flotante)
+// index.js - WIDGET PHANNIE (UI de Panel Plegable)
 
 // **********************************************
 // ********* LÓGICA DE PROCESAMIENTO **********
 // **********************************************
 
-// Esta función ahora solo crea y actualiza el contenido del panel flotante.
 function updateWidgetPanel(response) {
     const WIDGET_START_TAG = '<WIDGET_DATA>';
     const WIDGET_END_TAG = '</WIDGET_DATA>';
     const panelId = 'phannie-widget-ui-panel'; 
 
-    // 1. Obtener la referencia al panel lateral
     let widgetPanel = document.getElementById(panelId);
 
-    // Si el panel no existe (debería existir si la extensión se cargó bien, pero por seguridad)
     if (!widgetPanel) {
-        // Podríamos crearlo aquí o simplemente ignorar si el bot no tiene el tag.
         return; 
     }
 
-    // Si el mensaje no contiene el bloque de datos, ocultamos el panel.
+    // Si el mensaje no contiene el bloque de datos, vaciamos el contenido del widget.
     if (!response.includes(WIDGET_START_TAG)) {
-        widgetPanel.innerHTML = '<p style="text-align:center; padding:10px;">Widget en espera de datos...</p>';
-        return;
+        widgetPanel.innerHTML = '<p style="text-align:center; padding:10px; font-style: italic; opacity:0.8;">Esperando la primera respuesta de la IA...</p>';
+        return response; // Devolvemos el texto sin modificar
     }
 
     try {
-        // --- Extracción de Datos (TU LÓGICA) ---
-        // (La lógica de extracción de datos es la misma)
+        // --- Extracción de Datos ---
         const startIndex = response.indexOf(WIDGET_START_TAG) + WIDGET_START_TAG.length;
         const endIndex = response.indexOf(WIDGET_END_TAG);
         const dataBlock = response.substring(startIndex, endIndex).trim();
@@ -38,7 +33,6 @@ function updateWidgetPanel(response) {
             return match ? match[1].trim() : null;
         };
 
-        // ... (El resto de tu lógica de widget: data extraction, HTML generation, etc.)
         const data = {};
         data.pensamientoNormal = extractValue('Pensamiento Normal');
         data.pensamientoRaro = extractValue('Pensamiento Raro');
@@ -53,8 +47,9 @@ function updateWidgetPanel(response) {
         const busquedasStr = extractValue('Búsquedas');
         data.busquedas = busquedasStr ? busquedasStr.split('|').map(b => b.trim()) : [];
 
-        // --- Generación de HTML (Adaptado para el panel) ---
-        
+        // --- Generación de HTML (Tu Diseño) ---
+        // (Tu HTML completo para el panel, asegurando que se vea bien en el espacio del menú lateral)
+
         let transaccionesHTML = data.transacciones.map(t => {
             const parts = t.split(';');
             const desc = parts[0].trim();
@@ -142,35 +137,33 @@ function updateWidgetPanel(response) {
 // **********************************************
 
 const extension = {
-    name: "WIDGET PHANNIE PRO", 
+    name: "WIDGET PHANNIE", // ¡Nombre corregido!
 
-    // Esta función crea el panel en la UI (parecido al RPG Companion)
+    // Esta función ahora crea el panel *plegable*
     onExtensionLoaded: async () => {
         // Engancha la función de procesamiento al evento de SillyTavern
         extension.on('onMessageGeneration', extension.onMessageGeneration);
         
-        // Crea el panel en la barra lateral
+        // --- CÓDIGO CLAVE PARA EL PANEL PLEGLABLE (Como el RPG Companion) ---
         const panelHtml = `
             <div id="phannie-widget-ui-panel" style="
-                margin-top: 10px;
                 padding: 10px;
-                background: #fcfcfc;
-                border: 1px solid #f2d7e3;
-                border-radius: 16px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-                max-height: 80vh; 
+                font-size: 12px;
+                max-height: 70vh; 
                 overflow-y: auto;
             ">
-                <h2 style="font-size: 14px; margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #eee;">
-                    📱 WIDGET PHANNIE PRO
-                </h2>
                 <p style="text-align:center; opacity:0.7;">Widget esperando datos de la IA...</p>
             </div>
         `;
         
-        // Inyecta el panel en la UI (generalmente en la columna de la derecha)
-        // Usamos addElementsTo.sidebar para el menú lateral
-        addElementsTo.sidebar(panelHtml); 
+        // Usa addElementsTo.menu para inyectar en el panel desplegable
+        addElementsTo.menu({
+            item: 'WIDGET PHANNIE', // Lo que aparecerá en el menú plegable
+            html: panelHtml,        // El contenido del panel
+            id: 'widget-phannie-pro-menu', // ID único
+            icon: '📱' // Icono para el menú (puedes usar el que quieras)
+        }); 
+        // ----------------------------------------------------------------------
     },
     
     // Función que se llama después de que el bot genera texto
