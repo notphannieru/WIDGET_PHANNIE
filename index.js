@@ -1,17 +1,21 @@
-// index.js - WIDGET PHANNIE (Botón Flotante, Estilos Corregidos)
+// index.js - WIDGET PHANNIE (Usando SillyTavern Templating)
+// Importamos la función necesaria de SillyTavern (como lo hace el RPG Companion)
+import { renderExtensionTemplateAsync } from '../../../extensions.js';
 
-// La lógica de procesamiento updateWidgetPanel(response) es robusta y no necesita cambios. 
-// Solo cambiamos la sección onExtensionLoaded para la UI.
+// **********************************************
+// ********* LÓGICA DE PROCESAMIENTO **********
+// **********************************************
 
+// (La función updateWidgetPanel queda igual que en mi respuesta anterior)
 function updateWidgetPanel(response) {
     const WIDGET_START_TAG = '<WIDGET_DATA>';
     const WIDGET_END_TAG = '</WIDGET_DATA>';
-    const panelId = 'phannie-widget-ui-panel'; 
+    const panelId = 'phannie-panel-content'; // Apuntamos al contenido dentro del template
 
     let widgetPanel = document.getElementById(panelId);
-    let widgetButton = document.getElementById('phannie-widget-button');
-
-    if (!widgetPanel || !widgetButton) {
+    let mainPanel = document.getElementById('phannie-widget-ui-panel'); 
+    
+    if (!widgetPanel || !mainPanel) {
         return response;
     }
     
@@ -21,7 +25,7 @@ function updateWidgetPanel(response) {
     }
 
     try {
-        // --- LÓGICA DE EXTRACCIÓN Y HTML (SIN CAMBIOS) ---
+        // --- Extracción de Datos (misma lógica) ---
         const startIndex = response.indexOf(WIDGET_START_TAG) + WIDGET_START_TAG.length;
         const endIndex = response.indexOf(WIDGET_END_TAG);
         const dataBlock = response.substring(startIndex, endIndex).trim();
@@ -35,6 +39,132 @@ function updateWidgetPanel(response) {
         const data = {};
         data.pensamientoNormal = extractValue('Pensamiento Normal');
         data.pensamientoRaro = extractValue('Pensamiento Raro');
+        data.saldo = extractValue('Saldo');
+        
+        const transaccionesStr = extractValue('Transacciones');
+        data.transacciones = transaccionesStr ? transaccionesStr.split('|').map(t => t.trim()) : [];
+        
+        const notificacionesStr = extractValue('Notificaciones');
+        data.notificaciones = notificacionesStr ? notificacionesStr.split('|').map(n => n.trim()) : [];
+        
+        const busquedasStr = extractValue('Búsquedas');
+        data.busquedas = busquedasStr ? busquedasStr.split('|').map(b => b.trim()) : [];
+
+        // --- Generación de HTML (misma lógica) ---
+        let transaccionesHTML = data.transacciones.map(t => {
+            const parts = t.split(';');
+            const desc = parts[0].trim();
+            const monto = parts.length > 1 ? parts[1].trim() : '';
+            const isPositive = monto.includes('+');
+            const icon = isPositive ? '🏧' : '☕'; 
+            const color = isPositive ? '#0b8a3a' : '#444'; 
+
+            return `
+                <li style="display:flex; align-items:center; background:#fff; border:1px solid #f2d7e3; border-radius:8px; padding:4px;">
+                    <span style="font-size:14px; margin-right:6px;">${icon}</span>
+                    <span style="font-weight:600; font-size:12px;">${desc}</span>
+                    <span style="font-weight:700; font-size:12px; color:${color}; margin-left:auto;">${monto}</span>
+                </li>
+            `;
+        }).join('');
+
+        let notificacionesHTML = data.notificaciones.map(n => {
+             let icon = '💬'; 
+             if (n.toLowerCase().includes('instagram') || n.toLowerCase().includes('twitter')) icon = '📸';
+             if (n.toLowerCase().includes('recordatorio') || n.toLowerCase().includes('basura')) icon = '⚠️';
+             if (n.toLowerCase().includes('facebook')) icon = '👍';
+
+            return `<li style="font-size:12px; background:#fff; border:1px solid #f2d7e3; border-radius:8px; padding:4px;">${icon} ${n}</li>`;
+        }).join('');
+
+        let busquedasHTML = data.busquedas.map(b => {
+            return `<li style="font-size:12px; background:#fff; border:1px solid #f2d7e3; border-radius:8px; padding:4px;">${b}</li>`;
+        }).join('');
+
+        const widgetContent = `
+            <div style="font-family:sans-serif; font-size:12px; display:flex; flex-direction:column; gap:8px;">
+                <div style="background:#fff7f9; border:1px solid #f2d7e3; border-radius:14px; padding:8px;">
+                    <h3 style="margin:0 0 4px 0; font-size:13px; font-weight:700;">💭 Pensamientos</h3>
+                    <p style="margin:2px 0; font-size:12px; line-height:1.3; color:#444;">"${data.pensamientoNormal || '...pensando...'}"</p>
+                    <p style="margin:2px 0; font-size:12px; opacity:.8;">Raro: "${data.pensamientoRaro || '...cosas raras...'}"</p>
+                </div>
+
+                <div style="background:#fff7f9; border:1px solid #f2d7e3; border-radius:14px; padding:8px;">
+                    <h3 style="margin:0 0 4px 0; font-size:13px; font-weight:700;">💳 Cartera</h3>
+                    <div style="background:#ffe9f1; border:1px solid #f7c9da; border-radius:10px; padding:6px; text-align:center; margin-bottom:6px;">
+                        <div style="font-size:11px; opacity:.75; font-weight:600;">Saldo</div>
+                        <div style="font-size:18px; font-weight:700;">${data.saldo || '$0.00'}</div>
+                    </div>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:4px;">
+                        ${transaccionesHTML || '<li style="font-size:11px; padding:4px; opacity:0.7;">No hay movimientos.</li>'}
+                    </ul>
+                </div>
+                
+                <div style="background:#fff7f9; border:1px solid #f2d7e3; border-radius:14px; padding:8px;">
+                    <h3 style="margin:0 0 4px 0; font-size:13px; font-weight:700;">🔔 Notificaciones</h3>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:4px;">
+                        ${notificacionesHTML || '<li style="font-size:11px; padding:4px; opacity:0.7;">Bandeja vacía.</li>'}
+                    </ul>
+                </div>
+
+                <div style="background:#fff7f9; border:1px solid #f2d7e3; border-radius:14px; padding:8px;">
+                    <h3 style="margin:0 0 4px 0; font-size:13px; font-weight:700;">🔎 Búsquedas</h3>
+                    <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:4px;">
+                        ${busquedasHTML || '<li style="font-size:11px; padding:4px; opacity:0.7;">No hay historial.</li>'}
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        widgetPanel.innerHTML = widgetContent;
+        mainPanel.style.display = 'block';
+
+        const textWithoutData = response.replace(new RegExp(`${WIDGET_START_TAG}.*?${WIDGET_END_TAG}`, 's'), '').trim();
+        return textWithoutData;
+
+    } catch (e) {
+        widgetPanel.innerHTML = '<p style="color: red; padding:10px;">[ERROR DE WIDGET: Revisa el formato de datos del bot]</p>';
+        const textWithoutData = response.replace(new RegExp(`${WIDGET_START_TAG}.*?${WIDGET_END_TAG}`, 's'), '').trim();
+        return textWithoutData;
+    }
+}
+
+
+// **********************************************
+// ************ ESTRUCTURA DEL HOOK ***********
+// **********************************************
+
+const extension = {
+    name: "WIDGET PHANNIE", 
+
+    onExtensionLoaded: async () => {
+        extension.on('onMessageGeneration', extension.onMessageGeneration);
+        
+        // --- CARGA E INYECCIÓN DE TEMPLATE (ESTILO MARINARA) ---
+        
+        // 1. Cargar el HTML usando la función de SillyTavern
+        const templateHtml = await renderExtensionTemplateAsync(extension.name, 'template');
+        
+        // 2. Inyectar el HTML al cuerpo (usando jQuery)
+        $('body').append(templateHtml);
+
+        // 3. Configurar el evento de clic del botón (necesita que los elementos se inyecten primero)
+        const $panel = $('#phannie-widget-ui-panel');
+        const $button = $('#phannie-widget-button'); 
+
+        // Toggle el panel al hacer clic en el botón
+        $button.on('click', () => {
+            // Usamos toggleClass en lugar de .style.display para que el CSS maneje la animación/visibilidad
+            $panel.toggleClass('phannie-open'); 
+        });
+    },
+    
+    onMessageGeneration: async (data, chat) => {
+        return updateWidgetPanel(data);
+    }
+};
+
+export { extension };        data.pensamientoRaro = extractValue('Pensamiento Raro');
         data.saldo = extractValue('Saldo');
         
         const transaccionesStr = extractValue('Transacciones');
