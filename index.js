@@ -151,42 +151,7 @@ const extension = {
     }
 };
 
-export { extension };        };
-
-        const data = {};
-        data.pensamientoNormal = extractValue('Pensamiento Normal');
-        data.pensamientoRaro = extractValue('Pensamiento Raro');
-        data.saldo = extractValue('Saldo');
-        
-        const transaccionesStr = extractValue('Transacciones');
-        data.transacciones = transaccionesStr ? transaccionesStr.split('|').map(t => t.trim()) : [];
-        
-        const notificacionesStr = extractValue('Notificaciones');
-        data.notificaciones = notificacionesStr ? notificacionesStr.split('|').map(n => n.trim()) : [];
-        
-        const busquedasStr = extractValue('Búsquedas');
-        data.busquedas = busquedasStr ? busquedasStr.split('|').map(b => b.trim()) : [];
-
-        // --- Generación de HTML (misma lógica) ---
-        let transaccionesHTML = data.transacciones.map(t => {
-            const parts = t.split(';');
-            const desc = parts[0].trim();
-            const monto = parts.length > 1 ? parts[1].trim() : '';
-            const isPositive = monto.includes('+');
-            const icon = isPositive ? '🏧' : '☕'; 
-            const color = isPositive ? '#0b8a3a' : '#444'; 
-
-            return `
-                <li style="display:flex; align-items:center; background:#fff; border:1px solid #f2d7e3; border-radius:8px; padding:4px;">
-                    <span style="font-size:14px; margin-right:6px;">${icon}</span>
-                    <span style="font-weight:600; font-size:12px;">${desc}</span>
-                    <span style="font-weight:700; font-size:12px; color:${color}; margin-left:auto;">${monto}</span>
-                </li>
-            `;
-        }).join('');
-
-        let notificacionesHTML = data.notificaciones.map(n => {
-             let icon = '💬'; 
+export { extension };  let icon = '💬'; 
              if (n.toLowerCase().includes('instagram') || n.toLowerCase().includes('twitter')) icon = '📸';
              if (n.toLowerCase().includes('recordatorio') || n.toLowerCase().includes('basura')) icon = '⚠️';
              if (n.toLowerCase().includes('facebook')) icon = '👍';
