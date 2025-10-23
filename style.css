@@ -1,40 +1,75 @@
-/* style.css para WIDGET PHANNIE */
+/* style.css - WIDGET PHANNIE */
 
-/* Estilos para el botón flotante (FAB) */
-#phannie-widget-button {
-    /* Los estilos de posición se definen en index.js */
-    border: 2px solid var(--border-color);
+/* Variables para usar los colores del tema de SillyTavern */
+.phannie-panel {
+    --phannie-bg: var(--bg2);
+    --phannie-border: var(--border-color);
+    --phannie-highlight: var(--HighlightColor);
+    --phannie-text: var(--page-text-color);
+}
+
+/* Estilos del Panel Principal (Flotante) */
+.phannie-panel {
+    position: fixed;
+    top: 50%;
+    right: 0; /* Lo enganchamos al borde derecho */
+    transform: translateY(-50%) translateX(100%); /* Oculto fuera de la vista */
+    width: 250px;
+    background: var(--phannie-bg);
+    color: var(--phannie-text);
+    border: 1px solid var(--phannie-border);
+    border-radius: 16px 0 0 16px; 
+    box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+    padding: 10px;
+    z-index: 10000;
+    max-height: 90vh; 
+    overflow-y: auto;
+    /* Transición para que se "despliegue" */
+    transition: transform 0.3s ease-out; 
+}
+
+/* Clase para MOSTRAR el Panel (lo movemos a la posición visible) */
+.phannie-panel.phannie-open {
+    transform: translateY(-50%) translateX(0);
+}
+
+.phannie-panel-header {
+    border-bottom: 2px solid var(--phannie-border);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+}
+
+.phannie-panel-header h3 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--phannie-highlight);
+}
+
+/* Estilos del Botón Flotante (FAB) */
+.phannie-fab {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    background: var(--button-primary-bg);
+    color: var(--button-primary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    z-index: 10001;
     transition: all 0.2s ease;
 }
 
-#phannie-widget-button:hover {
-    background: var(--HighlightColor) !important;
-    color: var(--page-text-color) !important;
-    box-shadow: 0 0 15px var(--HighlightColor);
-    transform: scale(1.1);
-}
-
-/* Estilos para el panel flotante */
-#phannie-widget-ui-panel {
-    /* Los estilos de posición se definen en index.js */
-    color: var(--page-text-color);
-    border: 2px solid var(--border-color);
-    box-shadow: 0 0 20px var(--ShadowColor);
-    /* Fondo transparente para usar el fondo de ST */
-    background: var(--bg2); 
-}
-
-#phannie-widget-ui-panel h2 {
-    color: var(--HighlightColor);
-    border-bottom: 2px solid var(--HighlightColor);
-}
-
-/* Scrollbar personalizado para el panel */
-#phannie-widget-ui-panel::-webkit-scrollbar {
-    width: 8px;
-}
-
-#phannie-widget-ui-panel::-webkit-scrollbar-track {
+.phannie-fab:hover {
+    background: var(--phannie-highlight) !important;
+    transform: translateY(-50%) scale(1.1);
+}#phannie-widget-ui-panel::-webkit-scrollbar-track {
     background: var(--bg2);
     border-radius: 4px;
 }
