@@ -1,4 +1,4 @@
-// index.js - WIDGET PHANNIE (UI de Panel Plegable)
+// index.js - WIDGET PHANNIE (Botón Flotante)
 
 // **********************************************
 // ********* LÓGICA DE PROCESAMIENTO **********
@@ -10,15 +10,16 @@ function updateWidgetPanel(response) {
     const panelId = 'phannie-widget-ui-panel'; 
 
     let widgetPanel = document.getElementById(panelId);
+    let widgetButton = document.getElementById('phannie-widget-button');
 
-    if (!widgetPanel) {
-        return; 
+    if (!widgetPanel || !widgetButton) {
+        return response; // No hay panel/botón, devolvemos el texto original
     }
-
-    // Si el mensaje no contiene el bloque de datos, vaciamos el contenido del widget.
+    
+    // Si el mensaje no contiene el bloque de datos, reiniciamos el panel.
     if (!response.includes(WIDGET_START_TAG)) {
         widgetPanel.innerHTML = '<p style="text-align:center; padding:10px; font-style: italic; opacity:0.8;">Esperando la primera respuesta de la IA...</p>';
-        return response; // Devolvemos el texto sin modificar
+        return response; 
     }
 
     try {
@@ -48,8 +49,7 @@ function updateWidgetPanel(response) {
         data.busquedas = busquedasStr ? busquedasStr.split('|').map(b => b.trim()) : [];
 
         // --- Generación de HTML (Tu Diseño) ---
-        // (Tu HTML completo para el panel, asegurando que se vea bien en el espacio del menú lateral)
-
+        // El código de generación de HTML permanece igual para actualizar el contenido del panel
         let transaccionesHTML = data.transacciones.map(t => {
             const parts = t.split(';');
             const desc = parts[0].trim();
@@ -115,17 +115,16 @@ function updateWidgetPanel(response) {
             </div>
         `;
 
-        // 2. Actualizar el contenido del panel
+        // 2. Actualizar el contenido del panel y mostrarlo
         widgetPanel.innerHTML = widgetContent;
+        widgetPanel.style.display = 'block'; // Aseguramos que esté visible
 
         // 3. Devolver el mensaje del bot *sin* el bloque de datos
         const textWithoutData = response.replace(new RegExp(`${WIDGET_START_TAG}.*?${WIDGET_END_TAG}`, 's'), '').trim();
         return textWithoutData;
 
     } catch (e) {
-        // En caso de error, muestra un mensaje en el panel
         widgetPanel.innerHTML = '<p style="color: red; padding:10px;">[ERROR DE WIDGET: Revisa el formato de datos del bot]</p>';
-        // Devuelve el mensaje sin datos crudos, si es posible
         const textWithoutData = response.replace(new RegExp(`${WIDGET_START_TAG}.*?${WIDGET_END_TAG}`, 's'), '').trim();
         return textWithoutData;
     }
@@ -137,36 +136,78 @@ function updateWidgetPanel(response) {
 // **********************************************
 
 const extension = {
-    name: "WIDGET PHANNIE", // ¡Nombre corregido!
+    name: "WIDGET PHANNIE", 
 
-    // Esta función ahora crea el panel *plegable*
     onExtensionLoaded: async () => {
-        // Engancha la función de procesamiento al evento de SillyTavern
+        // Enganche para el procesamiento de mensajes
         extension.on('onMessageGeneration', extension.onMessageGeneration);
         
-        // --- CÓDIGO CLAVE PARA EL PANEL PLEGLABLE (Como el RPG Companion) ---
+        // --- CÓDIGO CLAVE PARA EL BOTÓN Y PANEL FLOTANTE (Enganche directo al DOM) ---
+        
+        // 1. Crear el panel (oculto inicialmente)
         const panelHtml = `
             <div id="phannie-widget-ui-panel" style="
+                position: fixed;
+                top: 50%;
+                right: 20px;
+                transform: translateY(-50%);
+                width: 200px;
+                background: var(--bg3);
+                border: 1px solid var(--border-color);
+                border-radius: 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                 padding: 10px;
-                font-size: 12px;
-                max-height: 70vh; 
+                z-index: 1000;
+                display: none; /* Inicialmente oculto */
+                max-height: 80vh; 
                 overflow-y: auto;
             ">
-                <p style="text-align:center; opacity:0.7;">Widget esperando datos de la IA...</p>
+                <h2 style="font-size: 14px; margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid var(--border-color);">
+                    📱 WIDGET PHANNIE
+                </h2>
+                <p style="text-align:center; opacity:0.7;">Widget esperando datos...</p>
             </div>
         `;
         
-        // Usa addElementsTo.menu para inyectar en el panel desplegable
-        addElementsTo.menu({
-            item: 'WIDGET PHANNIE', // Lo que aparecerá en el menú plegable
-            html: panelHtml,        // El contenido del panel
-            id: 'widget-phannie-pro-menu', // ID único
-            icon: '📱' // Icono para el menú (puedes usar el que quieras)
-        }); 
+        // 2. Crear el botón flotante
+        const buttonHtml = `
+            <div id="phannie-widget-button" style="
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: var(--button-primary-bg);
+                color: var(--button-primary-color);
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                cursor: pointer;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                z-index: 1001;
+            ">
+                📱
+            </div>
+        `;
+        
+        // 3. Añadir ambos elementos al cuerpo del documento (DOM)
+        document.body.insertAdjacentHTML('beforeend', panelHtml);
+        document.body.insertAdjacentHTML('beforeend', buttonHtml);
+
+        // 4. Configurar el evento de clic del botón para TOGGLE (mostrar/ocultar) el panel
+        document.getElementById('phannie-widget-button').addEventListener('click', () => {
+            const panel = document.getElementById('phannie-widget-ui-panel');
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        });
         // ----------------------------------------------------------------------
     },
     
-    // Función que se llama después de que el bot genera texto
     onMessageGeneration: async (data, chat) => {
         return updateWidgetPanel(data);
     }
